@@ -13,17 +13,9 @@ public class UsersResource {
     private static final List<User> names = new ArrayList<>();
     private static final Gson gson = new Gson();
 
-    private Integer findUser(String username){
-        for (int i = 0; i < names.size(); i++) {
-            if (names.get(i).getUsername().equals(username)){
-                return i;
-            }
-        } return -1;
+    private User findUser(String username) {
+        return names.stream().filter(u -> u.getUsername().equals(username)).findFirst().orElse(null);
     }
-    /*
-    private boolean userExists(String username) {
-        return findUser(username) != -1;
-    }*/
 
     @GET
     public Response getAll() {
@@ -32,17 +24,10 @@ public class UsersResource {
 
     @POST
     public Response createUser(@QueryParam("username") String user) {
-            if (user == null) {
-                return Response.status(400, "No user sent").build();
-            }
-            /*
-            if (!userExists(user)) {
-                names.add(new User(user));
-                return Response.ok("User created").build();
-            } else
-                return Response.status(400, "User already exists").build();
-            */
-        if (findUser(user) == -1) {
+        if (user == null) {
+            return Response.status(400, "No user sent").build();
+        }
+        if (findUser(user) == null) {
             names.add(new User(user));
             return Response.ok("User created").build();
         } else
@@ -51,27 +36,25 @@ public class UsersResource {
 
     @DELETE //delete user
     public Response deleteUser(@QueryParam("username") String user) {
-        int index = findUser(user);
-        if (index != -1) {
-            names.remove(index);
+
+        if (findUser(user) != null) {
+            names.removeIf(u -> u.getUsername().equals(user));
             return Response.ok("User deleted").build();
         } else {
-            return  Response.notModified("User doesn't exist").build();
+            return Response.notModified("User doesn't exist").build();
         }
     }
 
-    @Path("/{username}" )
+    @Path("/{username}")
     @PUT
     public Response editUser(@QueryParam("username") String userNew, @PathParam("username") String userOld) {
-        int index = findUser(userOld);
-        if (index != -1) {
-            names.get(index).setUsername(userNew);
+        if (findUser(userOld) != null) {
+            findUser(userOld).setUsername(userNew);
             return Response.ok("User Edited to " + userNew).build();
         } else {
-            return  Response.notModified("User doesn't exist").build();
+            return Response.notModified("User doesn't exist").build();
         }
     }
-
 
 
 }
